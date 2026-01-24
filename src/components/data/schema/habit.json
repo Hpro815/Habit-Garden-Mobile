@@ -1,0 +1,84 @@
+{
+  "name": "Habit",
+  "description": "Entity for storing user habits with tracking information",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "required": true,
+      "primary": true
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "theme",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "colorPalette",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "goalFrequency",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customFrequency",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "reminderEnabled",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "reminderTime",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "currentStage",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "xp",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "streakCount",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "lastCompletedAt",
+      "type": "timestamp",
+      "required": false
+    },
+    {
+      "name": "createdAt",
+      "type": "timestamp",
+      "required": true
+    },
+    {
+      "name": "updatedAt",
+      "type": "timestamp",
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "hasMany",
+      "target": "Completion",
+      "foreignKey": "habitId"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Completion",
+  "description": "Entity for tracking habit completion events",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "required": true,
+      "primary": true
+    },
+    {
+      "name": "habitId",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "completedAt",
+      "type": "timestamp",
+      "required": true
+    },
+    {
+      "name": "xpGained",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "createdAt",
+      "type": "timestamp",
+      "required": true
+    }
+  ],
+  "relationships": [
+    {
+      "type": "belongsTo",
+      "target": "Habit",
+      "foreignKey": "habitId"
+    }
+  ]
+}

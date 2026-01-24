@@ -1,0 +1,57 @@
+{
+  "name": "UserPreferences",
+  "description": "Entity for storing user settings and preferences",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "required": true,
+      "primary": true
+    },
+    {
+      "name": "hasCompletedOnboarding",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "defaultTheme",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "notificationTime",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "isPremium",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "purchasedSkins",
+      "type": "json",
+      "required": false
+    },
+    {
+      "name": "purchasedBackgrounds",
+      "type": "json",
+      "required": false
+    },
+    {
+      "name": "purchasedAnimations",
+      "type": "json",
+      "required": false
+    },
+    {
+      "name": "createdAt",
+      "type": "timestamp",
+      "required": true
+    },
+    {
+      "name": "updatedAt",
+      "type": "timestamp",
+      "required": true
+    }
+  ]
+}
