@@ -25,6 +25,22 @@ const ADMOB_CONFIG = {
   adUnitId: 'ca-app-pub-1715028570954921/1560152691',
 };
 
+// Declare Android WebView interface for TypeScript
+declare global {
+  interface Window {
+    AndroidReward?: {
+      showRewardAd: () => void;
+    };
+    // Callback function for Android to call when reward ad completes
+    onRewardAdComplete?: () => void;
+  }
+}
+
+// Check if running in Android WebView
+function isAndroidWebView(): boolean {
+  return typeof window !== 'undefined' && typeof window.AndroidReward !== 'undefined';
+}
+
 interface WatchAdsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -69,6 +85,26 @@ export function WatchAdsDialog({ open, onOpenChange, onComplete }: WatchAdsDialo
   const progress = (adsWatched / ADS_PER_SLOT) * 100;
   const adProgress = ((AD_DURATION_SECONDS - timeRemaining) / AD_DURATION_SECONDS) * 100;
 
+  // Register callback for Android to call when reward ad completes
+  useEffect(() => {
+    if (isAndroidWebView()) {
+      window.onRewardAdComplete = () => {
+        const newCount = adsWatched + 1;
+        setAdsWatched(newCount);
+
+        if (newCount >= ADS_PER_SLOT) {
+          // All ads watched - grant the slot
+          addAdEarnedSlot();
+          setIsComplete(true);
+        }
+      };
+
+      return () => {
+        window.onRewardAdComplete = undefined;
+      };
+    }
+  }, [adsWatched]);
+
   // Countdown timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -100,33 +136,21 @@ export function WatchAdsDialog({ open, onOpenChange, onComplete }: WatchAdsDialo
   }, [isWatching, timeRemaining, adsWatched]);
 
   const handleWatchAd = () => {
-    // ========================================================================
-    // FOR REACT NATIVE / MOBILE APPS with AdMob:
-    // ========================================================================
-    // import { RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
-    //
-    // const rewardedAd = RewardedAd.createForAdRequest(ADMOB_CONFIG.adUnitId, {
-    //   requestNonPersonalizedAdsOnly: true,
-    // });
-    //
-    // rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-    //   rewardedAd.show();
-    // });
-    //
-    // rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
-    //   const newCount = adsWatched + 1;
-    //   setAdsWatched(newCount);
-    //   if (newCount >= ADS_PER_SLOT) {
-    //     addAdEarnedSlot();
-    //     setIsComplete(true);
-    //   }
-    // });
-    //
-    // rewardedAd.load();
-    // return;
-    // ========================================================================
+    // Check if running in Android WebView - call native ad interface
+    if (isAndroidWebView()) {
+      try {
+        window.AndroidReward?.showRewardAd();
+        // The native Android app will handle the ad display and reward
+        // It should call a JavaScript callback when the ad is complete
+        // For now, we'll close the dialog and let Android handle it
+        return;
+      } catch (error) {
+        console.error('Error calling AndroidReward.showRewardAd():', error);
+        // Fall through to simulated ad if native call fails
+      }
+    }
 
-    // Current implementation: Simulated ad with timer
+    // Web/Desktop: Show simulated ad with timer (no real ads on web)
     setTimeRemaining(AD_DURATION_SECONDS);
     setIsWatching(true);
   };
