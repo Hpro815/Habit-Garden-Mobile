@@ -132,7 +132,16 @@ code {
 	* {
 		@apply border-border outline-ring/50;
 	}
+	html,
+	body,
+	#app {
+		/* Ensure full height and background color to prevent black bars */
+		min-height: 100dvh;
+		background-color: var(--background);
+	}
 	body {
 		@apply bg-background text-foreground;
+		/* Handle safe areas for Android gesture navigation */
+		padding-bottom: env(safe-area-inset-bottom, 0px);
 	}
 }
