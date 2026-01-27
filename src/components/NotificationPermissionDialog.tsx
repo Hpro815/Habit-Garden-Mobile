@@ -8,7 +8,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useUpdateUserPreferences, useUserPreferences } from '@/hooks/useUserPreferences';
-import { Bell, BellOff, X } from 'lucide-react';
+import { Bell, BellOff } from 'lucide-react';
+
+// Check if running in Android WebView with notification support
+function isAndroidWebView(): boolean {
+  return typeof window !== 'undefined' && typeof window.AndroidNotification !== 'undefined';
+}
 
 interface NotificationPermissionDialogProps {
   open: boolean;
@@ -24,6 +29,23 @@ export function NotificationPermissionDialog({ open, onOpenChange }: Notificatio
     setIsRequesting(true);
 
     try {
+      // Check if running in Android WebView - use native interface
+      if (isAndroidWebView()) {
+        try {
+          window.AndroidNotification?.requestPermission();
+          // Android will call window.onNotificationPermissionResult when done
+          // For now, close the dialog and assume it's being handled
+          await updatePrefs.mutateAsync({
+            notificationPermissionAsked: true,
+          });
+          onOpenChange(false);
+          return;
+        } catch (error) {
+          console.error('Error calling AndroidNotification.requestPermission():', error);
+          // Fall through to web notifications
+        }
+      }
+
       // Check if browser supports notifications
       if (!('Notification' in window)) {
         await updatePrefs.mutateAsync({

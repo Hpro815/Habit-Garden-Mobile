@@ -9,6 +9,7 @@ import { HabitCard } from '@/components/HabitCard';
 import { CreateHabitDialog } from '@/components/CreateHabitDialog';
 import { PremiumDialog } from '@/components/PremiumDialog';
 import { LoginDialog } from '@/components/LoginDialog';
+import { NotificationButton } from '@/components/NotificationButton';
 
 export function HabitDashboard() {
   const { data: habits, isLoading } = useHabits();
@@ -56,6 +57,9 @@ export function HabitDashboard() {
               </p>
             </div>
             <div className="flex gap-2">
+              {/* Notification Button - Mobile Only */}
+              <NotificationButton />
+
               {/* Login/Account Button */}
               <Button
                 onClick={() => setIsLoginDialogOpen(true)}
