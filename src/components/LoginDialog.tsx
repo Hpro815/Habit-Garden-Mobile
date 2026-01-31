@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const updatePrefs = useUpdateUserPreferences();
   const { data: userPrefs } = useUserPreferences();
+  const queryClient = useQueryClient();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -90,6 +92,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             userName: users[data.email].name,
             isPremium: users[data.email].isPremium || false,
           });
+          // Invalidate habits query to load user-specific habits
+          await queryClient.invalidateQueries({ queryKey: ['habits'] });
+          await queryClient.invalidateQueries({ queryKey: ['completions'] });
           onOpenChange(false);
           loginForm.reset();
         } else {
@@ -135,6 +140,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         userEmail: data.email,
         userName: data.name,
       });
+      // Invalidate habits query to load user-specific habits (empty for new user)
+      await queryClient.invalidateQueries({ queryKey: ['habits'] });
+      await queryClient.invalidateQueries({ queryKey: ['completions'] });
 
       onOpenChange(false);
       signupForm.reset();
@@ -151,6 +159,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       userEmail: undefined,
       userName: undefined,
     });
+    // Invalidate habits query to load guest habits
+    await queryClient.invalidateQueries({ queryKey: ['habits'] });
+    await queryClient.invalidateQueries({ queryKey: ['completions'] });
     onOpenChange(false);
   };
 

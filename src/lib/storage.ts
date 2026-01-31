@@ -6,7 +6,30 @@ const STORAGE_KEYS = {
   HABITS: 'habitTracker_habits',
   COMPLETIONS: 'habitTracker_completions',
   USER_PREFS: 'habitTracker_userPreferences',
+  CURRENT_USER: 'habitTracker_currentUser',
 } as const;
+
+// Get the current user ID for user-specific storage
+function getCurrentUserId(): string {
+  const prefs = localStorage.getItem(STORAGE_KEYS.USER_PREFS);
+  if (prefs) {
+    try {
+      const parsed = JSON.parse(prefs);
+      if (parsed.isLoggedIn && parsed.userEmail) {
+        return parsed.userEmail;
+      }
+    } catch {
+      // Fall through to guest
+    }
+  }
+  return 'guest';
+}
+
+// Get user-specific storage key
+function getUserStorageKey(baseKey: string): string {
+  const userId = getCurrentUserId();
+  return `${baseKey}_${userId}`;
+}
 
 // Helper to safely parse JSON from localStorage
 function safeJSONParse<T>(key: string, defaultValue: T): T {
@@ -45,10 +68,11 @@ function safeJSONParse<T>(key: string, defaultValue: T): T {
   }
 }
 
-// Habit CRUD operations
+// Habit CRUD operations - now user-specific
 export const habitStorage = {
   getAll(): Habit[] {
-    return safeJSONParse<Habit[]>(STORAGE_KEYS.HABITS, []);
+    const key = getUserStorageKey(STORAGE_KEYS.HABITS);
+    return safeJSONParse<Habit[]>(key, []);
   },
 
   getById(id: string): Habit | undefined {
@@ -69,7 +93,8 @@ export const habitStorage = {
       createdMonth: currentMonth,
     };
     habits.push(newHabit);
-    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
+    const key = getUserStorageKey(STORAGE_KEYS.HABITS);
+    localStorage.setItem(key, JSON.stringify(habits));
     return newHabit;
   },
 
@@ -85,7 +110,8 @@ export const habitStorage = {
       updatedAt: new Date(),
     };
 
-    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(habits));
+    const key = getUserStorageKey(STORAGE_KEYS.HABITS);
+    localStorage.setItem(key, JSON.stringify(habits));
     return habits[index];
   },
 
@@ -95,21 +121,24 @@ export const habitStorage = {
 
     if (filtered.length === habits.length) return false;
 
-    localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(filtered));
+    const key = getUserStorageKey(STORAGE_KEYS.HABITS);
+    localStorage.setItem(key, JSON.stringify(filtered));
 
     // Also delete associated completions
     const completions = completionStorage.getAll();
     const filteredCompletions = completions.filter((c: Completion) => c.habitId !== id);
-    localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(filteredCompletions));
+    const completionsKey = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+    localStorage.setItem(completionsKey, JSON.stringify(filteredCompletions));
 
     return true;
   },
 };
 
-// Completion CRUD operations
+// Completion CRUD operations - now user-specific
 export const completionStorage = {
   getAll(): Completion[] {
-    return safeJSONParse<Completion[]>(STORAGE_KEYS.COMPLETIONS, []);
+    const key = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+    return safeJSONParse<Completion[]>(key, []);
   },
 
   getByHabitId(habitId: string): Completion[] {
@@ -136,7 +165,8 @@ export const completionStorage = {
       createdAt: new Date(),
     };
     completions.push(newCompletion);
-    localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(completions));
+    const key = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+    localStorage.setItem(key, JSON.stringify(completions));
     return newCompletion;
   },
 
@@ -146,12 +176,13 @@ export const completionStorage = {
 
     if (filtered.length === completions.length) return false;
 
-    localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(filtered));
+    const key = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+    localStorage.setItem(key, JSON.stringify(filtered));
     return true;
   },
 };
 
-// User Preferences operations
+// User Preferences operations - these remain global (not user-specific)
 export const userPrefsStorage = {
   get(): UserPreferences {
     const defaultPrefs: UserPreferences = {
@@ -194,8 +225,10 @@ export const userPrefsStorage = {
 // Bulk operations
 export const bulkOperations = {
   clearAllData(): void {
-    localStorage.removeItem(STORAGE_KEYS.HABITS);
-    localStorage.removeItem(STORAGE_KEYS.COMPLETIONS);
+    const habitsKey = getUserStorageKey(STORAGE_KEYS.HABITS);
+    const completionsKey = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+    localStorage.removeItem(habitsKey);
+    localStorage.removeItem(completionsKey);
     localStorage.removeItem(STORAGE_KEYS.USER_PREFS);
   },
 
@@ -217,10 +250,12 @@ export const bulkOperations = {
     userPreferences?: UserPreferences;
   }): void {
     if (data.habits) {
-      localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(data.habits));
+      const key = getUserStorageKey(STORAGE_KEYS.HABITS);
+      localStorage.setItem(key, JSON.stringify(data.habits));
     }
     if (data.completions) {
-      localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(data.completions));
+      const key = getUserStorageKey(STORAGE_KEYS.COMPLETIONS);
+      localStorage.setItem(key, JSON.stringify(data.completions));
     }
     if (data.userPreferences) {
       localStorage.setItem(STORAGE_KEYS.USER_PREFS, JSON.stringify(data.userPreferences));

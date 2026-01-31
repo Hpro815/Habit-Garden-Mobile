@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { habitStorage, completionStorage } from '@/lib/storage';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 import type { Habit } from '@/types/habit';
 import { GROWTH_STAGES } from '@/types/habit';
 
@@ -66,8 +67,12 @@ function checkHealthDecay(habits: Habit[]): Habit[] {
 }
 
 export function useHabits() {
+  const { data: userPrefs } = useUserPreferences();
+  // Include user email in query key so habits are refetched when user changes
+  const userId = userPrefs?.isLoggedIn ? userPrefs.userEmail : 'guest';
+
   return useQuery({
-    queryKey: ['habits'],
+    queryKey: ['habits', userId],
     queryFn: () => {
       const habits = habitStorage.getAll();
       // Apply health decay check when fetching habits
