@@ -17,18 +17,39 @@ import { useIsMobile } from '@/hooks/use-mobile';
 // Maximum length for garden name
 const MAX_GARDEN_NAME_LENGTH = 15;
 
-// Check if running in Android WebView
-function isAndroidApp(): boolean {
-  return typeof window !== 'undefined' && typeof window.Android !== 'undefined';
+// Declare AndroidNotifications interface for TypeScript
+declare global {
+  interface Window {
+    AndroidNotifications?: {
+      enableNotifications: () => void;
+      disableNotifications: () => void;
+    };
+  }
 }
 
-// Call Android to enable/disable notifications
-function setAndroidNotifications(enabled: boolean): void {
-  if (isAndroidApp()) {
+// Check if running in Android WebView with notifications support
+function isAndroidNotificationsAvailable(): boolean {
+  return typeof window !== 'undefined' && typeof window.AndroidNotifications !== 'undefined';
+}
+
+// Call Android to enable notifications
+function enableAndroidNotifications(): void {
+  if (isAndroidNotificationsAvailable()) {
     try {
-      window.Android?.setNotificationsEnabled(enabled);
+      window.AndroidNotifications?.enableNotifications();
     } catch (error) {
-      console.error('Error calling Android.setNotificationsEnabled:', error);
+      console.error('Error calling AndroidNotifications.enableNotifications:', error);
+    }
+  }
+}
+
+// Call Android to disable notifications
+function disableAndroidNotifications(): void {
+  if (isAndroidNotificationsAvailable()) {
+    try {
+      window.AndroidNotifications?.disableNotifications();
+    } catch (error) {
+      console.error('Error calling AndroidNotifications.disableNotifications:', error);
     }
   }
 }
@@ -42,7 +63,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { data: userPrefs } = useUserPreferences();
   const updatePrefs = useUpdateUserPreferences();
   const isMobile = useIsMobile();
-  const isAndroid = isAndroidApp();
+  const isAndroid = isAndroidNotificationsAvailable();
 
   // Local state for form
   const [gardenName, setGardenName] = useState('');
@@ -103,8 +124,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const handleNotificationToggle = async (enabled: boolean) => {
     setNotificationsEnabled(enabled);
 
-    // Immediately update Android
-    setAndroidNotifications(enabled);
+    // Immediately update Android (only in WebView)
+    if (enabled) {
+      enableAndroidNotifications();
+    } else {
+      disableAndroidNotifications();
+    }
 
     // Update preferences
     await updatePrefs.mutateAsync({

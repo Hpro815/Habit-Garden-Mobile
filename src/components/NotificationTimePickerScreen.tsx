@@ -6,27 +6,39 @@ import { Bell, BellOff, Clock } from 'lucide-react';
 import { useUpdateUserPreferences } from '@/hooks/useUserPreferences';
 import { AnimatedCharacter } from '@/components/AnimatedCharacter';
 
-// Declare Android interface for TypeScript
+// Declare AndroidNotifications interface for TypeScript
 declare global {
   interface Window {
-    Android?: {
-      setNotificationsEnabled: (enabled: boolean) => void;
+    AndroidNotifications?: {
+      enableNotifications: () => void;
+      disableNotifications: () => void;
     };
   }
 }
 
-// Check if running in Android WebView
-function isAndroidApp(): boolean {
-  return typeof window !== 'undefined' && typeof window.Android !== 'undefined';
+// Check if running in Android WebView with notifications support
+function isAndroidNotificationsAvailable(): boolean {
+  return typeof window !== 'undefined' && typeof window.AndroidNotifications !== 'undefined';
 }
 
-// Call Android to enable/disable notifications
-function setAndroidNotifications(enabled: boolean): void {
-  if (isAndroidApp()) {
+// Call Android to enable notifications
+function enableAndroidNotifications(): void {
+  if (isAndroidNotificationsAvailable()) {
     try {
-      window.Android?.setNotificationsEnabled(enabled);
+      window.AndroidNotifications?.enableNotifications();
     } catch (error) {
-      console.error('Error calling Android.setNotificationsEnabled:', error);
+      console.error('Error calling AndroidNotifications.enableNotifications:', error);
+    }
+  }
+}
+
+// Call Android to disable notifications
+function disableAndroidNotifications(): void {
+  if (isAndroidNotificationsAvailable()) {
+    try {
+      window.AndroidNotifications?.disableNotifications();
+    } catch (error) {
+      console.error('Error calling AndroidNotifications.disableNotifications:', error);
     }
   }
 }
@@ -73,8 +85,8 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
         notificationPermissionAsked: true,
       });
 
-      // Call Android to enable notifications
-      setAndroidNotifications(true);
+      // Call Android to enable notifications (only in WebView)
+      enableAndroidNotifications();
 
       onComplete();
     } catch (error) {
@@ -92,8 +104,8 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
         notificationPermissionAsked: true,
       });
 
-      // Call Android to disable notifications
-      setAndroidNotifications(false);
+      // Call Android to disable notifications (only in WebView)
+      disableAndroidNotifications();
 
       onComplete();
     } catch (error) {

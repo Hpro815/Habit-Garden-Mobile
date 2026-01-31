@@ -11,9 +11,9 @@ import { NotificationPermissionDialog, useNotificationPermissionPrompt } from "@
 import { NotificationTimePickerScreen } from "@/components/NotificationTimePickerScreen";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Check if running in Android WebView
-function isAndroidApp(): boolean {
-	return typeof window !== 'undefined' && typeof window.Android !== 'undefined';
+// Check if running in Android WebView with notifications support
+function isAndroidNotificationsAvailable(): boolean {
+	return typeof window !== 'undefined' && typeof window.AndroidNotifications !== 'undefined';
 }
 
 export const Route = createFileRoute("/")({
@@ -47,7 +47,7 @@ function App() {
 	// Only show if user hasn't been asked for notification permission yet
 	const showNotificationTimePicker =
 		isMobile &&
-		isAndroidApp() &&
+		isAndroidNotificationsAvailable() &&
 		!userPrefs?.notificationPermissionAsked &&
 		!notificationPickerComplete;
 
