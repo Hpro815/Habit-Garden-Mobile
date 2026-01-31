@@ -42,6 +42,14 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
   const [isLoading, setIsLoading] = useState(false);
   const updatePrefs = useUpdateUserPreferences();
 
+  // Get the display hour (24-hour format for PM)
+  const getDisplayHour = (hour: number): number => {
+    if (!isAM) {
+      return hour === 12 ? 12 : hour + 12;
+    }
+    return hour;
+  };
+
   // Convert to 24-hour format for storage
   const getTime24Hour = (): string => {
     let hour = selectedHour;
@@ -96,7 +104,8 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
   };
 
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = [0, 15, 30, 45];
+  // All minutes from 00 to 59
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/30 dark:to-blue-900/30 flex flex-col items-center justify-center p-6">
@@ -143,7 +152,7 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
               >
                 {hours.map((hour) => (
                   <option key={hour} value={hour}>
-                    {hour}
+                    {getDisplayHour(hour)}
                   </option>
                 ))}
               </select>
@@ -201,7 +210,7 @@ export function NotificationTimePickerScreen({ onComplete }: NotificationTimePic
           <div className="text-center py-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">You'll be reminded at</p>
             <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
-              {selectedHour}:{selectedMinute.toString().padStart(2, '0')} {isAM ? 'AM' : 'PM'}
+              {getDisplayHour(selectedHour)}:{selectedMinute.toString().padStart(2, '0')}
             </p>
           </div>
         </Card>

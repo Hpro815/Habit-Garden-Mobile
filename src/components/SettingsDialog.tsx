@@ -14,6 +14,9 @@ import { useUserPreferences, useUpdateUserPreferences } from '@/hooks/useUserPre
 import { Bell, Clock, Flower2, Settings, Check } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Maximum length for garden name
+const MAX_GARDEN_NAME_LENGTH = 15;
+
 // Check if running in Android WebView
 function isAndroidApp(): boolean {
   return typeof window !== 'undefined' && typeof window.Android !== 'undefined';
@@ -71,6 +74,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }, [userPrefs, open]);
 
+  // Get the display hour (24-hour format for PM)
+  const getDisplayHour = (hour: number): number => {
+    if (!isAM) {
+      return hour === 12 ? 12 : hour + 12;
+    }
+    return hour;
+  };
+
   // Convert to 24-hour format for storage
   const getTime24Hour = (): string => {
     let hour = selectedHour;
@@ -80,6 +91,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       hour = 0;
     }
     return `${hour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}`;
+  };
+
+  const handleGardenNameChange = (value: string) => {
+    // Limit to MAX_GARDEN_NAME_LENGTH characters
+    if (value.length <= MAX_GARDEN_NAME_LENGTH) {
+      setGardenName(value);
+    }
   };
 
   const handleNotificationToggle = async (enabled: boolean) => {
@@ -124,7 +142,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = [0, 15, 30, 45];
+  // All minutes from 00 to 59
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   // Only show notification settings on mobile Android app
   const showNotificationSettings = isMobile && isAndroid;
@@ -145,15 +164,21 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <div className="space-y-6 py-4">
           {/* Garden Name Section */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Flower2 className="text-green-500" size={18} />
-              <Label className="text-sm font-medium">Garden Name</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flower2 className="text-green-500" size={18} />
+                <Label className="text-sm font-medium">Garden Name</Label>
+              </div>
+              <span className="text-xs text-gray-400">
+                {gardenName.length}/{MAX_GARDEN_NAME_LENGTH}
+              </span>
             </div>
             <Input
               value={gardenName}
-              onChange={(e) => setGardenName(e.target.value)}
+              onChange={(e) => handleGardenNameChange(e.target.value)}
               placeholder="My Habit Garden"
-              className="w-full"
+              maxLength={MAX_GARDEN_NAME_LENGTH}
+              className="w-full text-sm"
             />
           </div>
 
@@ -193,7 +218,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     >
                       {hours.map((hour) => (
                         <option key={hour} value={hour}>
-                          {hour}
+                          {getDisplayHour(hour)}
                         </option>
                       ))}
                     </select>
