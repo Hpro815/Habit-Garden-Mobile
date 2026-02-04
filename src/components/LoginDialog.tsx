@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { useUpdateUserPreferences, useUserPreferences } from '@/hooks/useUserPreferences';
 import { useInitializeHabitsAfterLogin } from '@/hooks/useHabits';
 import { setCurrentUserId } from '@/lib/storage';
+import { registerUser, loginUser } from '@/services/authService';
 import { LogIn, UserPlus, Mail, Lock, User, LogOut } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -79,41 +80,35 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setIsLoading(true);
     setError(null);
 
-    // Simulate login - in a real app, this would call an API
-    // For now, we'll store the user info locally
     try {
-      // Check if there's a stored user with this email
-      const storedUsers = localStorage.getItem('habitTracker_users');
-      const users = storedUsers ? JSON.parse(storedUsers) : {};
+      // Login via backend API - this works across all devices
+      const result = await loginUser(data.email, data.password);
 
-      if (users[data.email]) {
-        // User exists, verify password (simple hash comparison for demo)
-        if (users[data.email].password === btoa(data.password)) {
-          // Set the current user ID BEFORE updating preferences to ensure storage uses correct key
-          setCurrentUserId(data.email);
-
-          await updatePrefs.mutateAsync({
-            isLoggedIn: true,
-            userEmail: data.email,
-            userName: users[data.email].name,
-            isPremium: users[data.email].isPremium || false,
-          });
-
-          // Initialize habits from backend (source of truth for signed-in users)
-          // This fetches user's habits from backend and updates local cache
-          await initializeHabits.mutateAsync();
-
-          // Invalidate habits query to load user-specific habits from backend
-          await queryClient.invalidateQueries({ queryKey: ['habits'] });
-          await queryClient.invalidateQueries({ queryKey: ['completions'] });
-          onOpenChange(false);
-          loginForm.reset();
-        } else {
-          setError('Invalid email or password');
-        }
-      } else {
-        setError('No account found with this email. Please sign up.');
+      if (!result.success) {
+        setError(result.error || 'Login failed. Please try again.');
+        setIsLoading(false);
+        return;
       }
+
+      // Set the current user ID BEFORE updating preferences to ensure storage uses correct key
+      setCurrentUserId(data.email);
+
+      await updatePrefs.mutateAsync({
+        isLoggedIn: true,
+        userEmail: result.user?.email || data.email,
+        userName: result.user?.name || '',
+        isPremium: result.user?.isPremium || false,
+      });
+
+      // Initialize habits from backend (source of truth for signed-in users)
+      // This fetches user's habits from backend and updates local cache
+      await initializeHabits.mutateAsync();
+
+      // Invalidate habits query to load user-specific habits from backend
+      await queryClient.invalidateQueries({ queryKey: ['habits'] });
+      await queryClient.invalidateQueries({ queryKey: ['completions'] });
+      onOpenChange(false);
+      loginForm.reset();
     } catch (err) {
       setError('Login failed. Please try again.');
     } finally {
@@ -126,24 +121,14 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setError(null);
 
     try {
-      // Store user info locally
-      const storedUsers = localStorage.getItem('habitTracker_users');
-      const users = storedUsers ? JSON.parse(storedUsers) : {};
+      // Register via backend API - this works across all devices
+      const result = await registerUser(data.email, data.password, data.name);
 
-      if (users[data.email]) {
-        setError('An account with this email already exists');
+      if (!result.success) {
+        setError(result.error || 'Registration failed. Please try again.');
         setIsLoading(false);
         return;
       }
-
-      // Save new user (simple password encoding for demo - not secure for production)
-      users[data.email] = {
-        name: data.name,
-        password: btoa(data.password),
-        isPremium: false,
-        createdAt: new Date().toISOString(),
-      };
-      localStorage.setItem('habitTracker_users', JSON.stringify(users));
 
       // Set the current user ID BEFORE updating preferences to ensure storage uses correct key
       setCurrentUserId(data.email);
@@ -151,8 +136,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       // Log in the new user
       await updatePrefs.mutateAsync({
         isLoggedIn: true,
-        userEmail: data.email,
-        userName: data.name,
+        userEmail: result.user?.email || data.email,
+        userName: result.user?.name || data.name,
+        isPremium: result.user?.isPremium || false,
       });
 
       // Initialize habits from backend (empty for new user, but sets up sync)
