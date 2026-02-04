@@ -25,6 +25,14 @@ export interface SyncResult<T> {
 }
 
 /**
+ * Check if backend API is configured
+ */
+function isBackendConfigured(): boolean {
+  const apiBasePath = import.meta.env.VITE_MCP_API_BASE_PATH;
+  return !!apiBasePath && apiBasePath.length > 0;
+}
+
+/**
  * Check if user is authenticated
  */
 function isUserAuthenticated(): boolean {
@@ -36,6 +44,9 @@ function isUserAuthenticated(): boolean {
  * Called after login to fetch all user's habits
  */
 export async function syncHabitsFromBackend(): Promise<SyncResult<Habit[]>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -78,6 +89,9 @@ export async function syncHabitsFromBackend(): Promise<SyncResult<Habit[]>> {
 export async function fetchHabitCompletionsFromBackend(
   habitId: string
 ): Promise<SyncResult<Completion[]>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -121,6 +135,9 @@ export async function fetchHabitCompletionsFromBackend(
 export async function createHabitOnBackend(
   habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<SyncResult<Habit>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -163,6 +180,9 @@ export async function updateHabitOnBackend(
   habitId: string,
   updates: Partial<Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<SyncResult<Habit>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -207,6 +227,9 @@ export async function updateHabitOnBackend(
 export async function deleteHabitOnBackend(
   habitId: string
 ): Promise<SyncResult<void>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -238,6 +261,9 @@ export async function recordCompletionOnBackend(
   habitId: string,
   completion: Omit<Completion, 'id' | 'createdAt'>
 ): Promise<SyncResult<Completion>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -282,6 +308,9 @@ export async function recordCompletionOnBackend(
 export async function deleteCompletionOnBackend(
   completionId: string
 ): Promise<SyncResult<void>> {
+  if (!isBackendConfigured()) {
+    return { success: false, error: 'Backend not configured' };
+  }
   if (!isUserAuthenticated()) {
     return { success: false, error: 'User not authenticated' };
   }
@@ -308,8 +337,8 @@ export async function deleteCompletionOnBackend(
 
 /**
  * Check if backend sync is available
- * Returns true if user is authenticated (backend sync enabled)
+ * Returns true if backend is configured and user is authenticated
  */
 export function isBackendSyncAvailable(): boolean {
-  return isUserAuthenticated();
+  return isBackendConfigured() && isUserAuthenticated();
 }
