@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useUpdateUserPreferences, useUserPreferences } from '@/hooks/useUserPreferences';
+import { useInitializeHabitsAfterLogin } from '@/hooks/useHabits';
+import { setCurrentUserId } from '@/lib/storage';
 import { LogIn, UserPlus, Mail, Lock, User, LogOut } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -53,6 +55,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const updatePrefs = useUpdateUserPreferences();
   const { data: userPrefs } = useUserPreferences();
   const queryClient = useQueryClient();
+  const initializeHabits = useInitializeHabitsAfterLogin();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -86,13 +89,21 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       if (users[data.email]) {
         // User exists, verify password (simple hash comparison for demo)
         if (users[data.email].password === btoa(data.password)) {
+          // Set the current user ID BEFORE updating preferences to ensure storage uses correct key
+          setCurrentUserId(data.email);
+
           await updatePrefs.mutateAsync({
             isLoggedIn: true,
             userEmail: data.email,
             userName: users[data.email].name,
             isPremium: users[data.email].isPremium || false,
           });
-          // Invalidate habits query to load user-specific habits
+
+          // Initialize habits from backend (source of truth for signed-in users)
+          // This fetches user's habits from backend and updates local cache
+          await initializeHabits.mutateAsync();
+
+          // Invalidate habits query to load user-specific habits from backend
           await queryClient.invalidateQueries({ queryKey: ['habits'] });
           await queryClient.invalidateQueries({ queryKey: ['completions'] });
           onOpenChange(false);
@@ -134,12 +145,19 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       };
       localStorage.setItem('habitTracker_users', JSON.stringify(users));
 
+      // Set the current user ID BEFORE updating preferences to ensure storage uses correct key
+      setCurrentUserId(data.email);
+
       // Log in the new user
       await updatePrefs.mutateAsync({
         isLoggedIn: true,
         userEmail: data.email,
         userName: data.name,
       });
+
+      // Initialize habits from backend (empty for new user, but sets up sync)
+      await initializeHabits.mutateAsync();
+
       // Invalidate habits query to load user-specific habits (empty for new user)
       await queryClient.invalidateQueries({ queryKey: ['habits'] });
       await queryClient.invalidateQueries({ queryKey: ['completions'] });
@@ -154,6 +172,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   };
 
   const handleLogout = async () => {
+    // Set the current user ID back to guest BEFORE updating preferences
+    setCurrentUserId('guest');
+
     await updatePrefs.mutateAsync({
       isLoggedIn: false,
       userEmail: undefined,

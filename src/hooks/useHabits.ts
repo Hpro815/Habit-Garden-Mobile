@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { habitStorage, completionStorage } from '@/lib/storage';
+import { habitStorage, completionStorage, setCurrentUserId, getCurrentUserId } from '@/lib/storage';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useCreaoAuth } from '@/sdk/core/auth';
+import * as dataLayer from '@/services/habitDataLayer';
 import type { Habit } from '@/types/habit';
 import { GROWTH_STAGES } from '@/types/habit';
 
@@ -68,16 +70,34 @@ function checkHealthDecay(habits: Habit[]): Habit[] {
 
 export function useHabits() {
   const { data: userPrefs } = useUserPreferences();
+  const { isAuthenticated } = useCreaoAuth();
+
   // Include user email in query key so habits are refetched when user changes
-  const userId = userPrefs?.isLoggedIn ? userPrefs.userEmail : 'guest';
+  const userId = userPrefs?.isLoggedIn ? (userPrefs.userEmail || 'guest') : 'guest';
+
+  // Ensure the storage layer's activeUserId is in sync with the current user
+  // This handles cases where the component re-renders after login/logout
+  if (getCurrentUserId() !== userId) {
+    setCurrentUserId(userId);
+  }
 
   return useQuery({
     queryKey: ['habits', userId],
-    queryFn: () => {
-      const habits = habitStorage.getAll();
+    queryFn: async () => {
+      // Double-check userId is set correctly before fetching
+      if (getCurrentUserId() !== userId) {
+        setCurrentUserId(userId);
+      }
+
+      // For authenticated users, fetch from backend (source of truth)
+      // For guests, use local storage only
+      const habits = await dataLayer.fetchAllHabits();
+
       // Apply health decay check when fetching habits
       return checkHealthDecay(habits);
     },
+    // Longer stale time for authenticated users since backend is source of truth
+    staleTime: isAuthenticated ? 5 * 60 * 1000 : 1 * 60 * 1000,
   });
 }
 
@@ -93,8 +113,12 @@ export function useCreateHabit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>) =>
-      Promise.resolve(habitStorage.create(habit)),
+    mutationFn: async (habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>) => {
+      // Use data layer which handles backend sync for authenticated users
+      const created = await dataLayer.createHabit(habit);
+      if (!created) throw new Error('Failed to create habit');
+      return created;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
     },
@@ -105,8 +129,11 @@ export function useUpdateHabit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Omit<Habit, 'id' | 'createdAt'>> }) =>
-      Promise.resolve(habitStorage.update(id, updates)),
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Omit<Habit, 'id' | 'createdAt'>> }) => {
+      // Use data layer which handles backend sync for authenticated users
+      const updated = await dataLayer.updateHabit(id, updates);
+      return updated;
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
       queryClient.invalidateQueries({ queryKey: ['habit', variables.id] });
@@ -118,7 +145,11 @@ export function useDeleteHabit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => Promise.resolve(habitStorage.delete(id)),
+    mutationFn: async (id: string) => {
+      // Use data layer which handles backend sync for authenticated users
+      const deleted = await dataLayer.deleteHabit(id);
+      return deleted;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
     },
@@ -157,7 +188,7 @@ export function useCompleteHabit() {
       }
 
       // Calculate new stage based on total completions
-      const completions = completionStorage.getByHabitId(habitId);
+      const completions = await dataLayer.fetchHabitCompletions(habitId);
       const totalCompletions = completions.length + 1; // +1 for current completion
       let newStage = habit.currentStage;
 
@@ -167,19 +198,21 @@ export function useCompleteHabit() {
         newStage = stageFromCompletions;
       }
 
-      // Create completion record
-      const completion = completionStorage.create({
+      // Create completion record using data layer (syncs to backend for authenticated users)
+      const completion = await dataLayer.recordCompletion(habitId, {
         habitId,
         completedAt: now,
         notes,
       });
 
+      if (!completion) throw new Error('Failed to record completion');
+
       // Restore health when completing habit (20 health per completion, max 100)
       const currentHealth = habit.health ?? 100;
       const newHealth = Math.min(100, currentHealth + 20);
 
-      // Update habit
-      const updatedHabit = habitStorage.update(habitId, {
+      // Update habit using data layer (syncs to backend for authenticated users)
+      const updatedHabit = await dataLayer.updateHabit(habitId, {
         currentStage: newStage,
         streakCount: newStreak,
         lastCompletedAt: now,
@@ -213,7 +246,8 @@ export function useReviveHabit() {
       if (!habit.isDead) throw new Error('Habit is not dead');
 
       // Revive with 50% health and reset stage to 0
-      const updatedHabit = habitStorage.update(habitId, {
+      // Use data layer which handles backend sync for authenticated users
+      const updatedHabit = await dataLayer.updateHabit(habitId, {
         health: 50,
         isDead: false,
         currentStage: 0,
@@ -234,7 +268,7 @@ export function useReviveHabit() {
 export function useHabitCompletions(habitId: string) {
   return useQuery({
     queryKey: ['completions', habitId],
-    queryFn: () => completionStorage.getByHabitId(habitId),
+    queryFn: () => dataLayer.fetchHabitCompletions(habitId),
     enabled: !!habitId,
   });
 }
@@ -242,11 +276,12 @@ export function useHabitCompletions(habitId: string) {
 export function useHabitStats(habitId: string) {
   return useQuery({
     queryKey: ['habit-stats', habitId],
-    queryFn: () => {
+    queryFn: async () => {
       const habit = habitStorage.getById(habitId);
       if (!habit) return null;
 
-      const completions = completionStorage.getByHabitId(habitId);
+      // Use data layer which handles backend sync for authenticated users
+      const completions = await dataLayer.fetchHabitCompletions(habitId);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -270,5 +305,23 @@ export function useHabitStats(habitId: string) {
       };
     },
     enabled: !!habitId,
+  });
+}
+
+/**
+ * Hook to initialize user data after login
+ * Should be called after successful authentication to sync with backend
+ */
+export function useInitializeHabitsAfterLogin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => dataLayer.initializeUserDataAfterLogin(),
+    onSuccess: () => {
+      // Invalidate all habit data to trigger refetch from backend
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      queryClient.invalidateQueries({ queryKey: ['completions'] });
+      queryClient.invalidateQueries({ queryKey: ['habit-stats'] });
+    },
   });
 }

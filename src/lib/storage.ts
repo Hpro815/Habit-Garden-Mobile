@@ -9,25 +9,46 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'habitTracker_currentUser',
 } as const;
 
-// Get the current user ID for user-specific storage
-function getCurrentUserId(): string {
+// Current active user ID - managed explicitly to avoid race conditions
+let activeUserId: string = 'guest';
+
+// Initialize activeUserId from localStorage on module load
+function initializeActiveUserId(): void {
   const prefs = localStorage.getItem(STORAGE_KEYS.USER_PREFS);
   if (prefs) {
     try {
       const parsed = JSON.parse(prefs);
       if (parsed.isLoggedIn && parsed.userEmail) {
-        return parsed.userEmail;
+        activeUserId = parsed.userEmail;
+        return;
       }
     } catch {
       // Fall through to guest
     }
   }
-  return 'guest';
+  activeUserId = 'guest';
+}
+
+// Initialize on module load
+initializeActiveUserId();
+
+// Get the current user ID for user-specific storage
+export function getCurrentUserId(): string {
+  return activeUserId;
+}
+
+// Set the current user ID - called when user logs in/out
+export function setCurrentUserId(userId: string): void {
+  activeUserId = userId;
 }
 
 // Get user-specific storage key
 function getUserStorageKey(baseKey: string): string {
-  const userId = getCurrentUserId();
+  return `${baseKey}_${activeUserId}`;
+}
+
+// Get storage key for a specific user (used for operations on specific accounts)
+function getStorageKeyForUser(baseKey: string, userId: string): string {
   return `${baseKey}_${userId}`;
 }
 
