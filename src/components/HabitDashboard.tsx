@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Crown, User, Settings } from 'lucide-react';
+import { Plus, Crown, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AnimatedCharacter } from '@/components/AnimatedCharacter';
@@ -8,7 +8,6 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { HabitCard } from '@/components/HabitCard';
 import { CreateHabitDialog } from '@/components/CreateHabitDialog';
 import { PremiumDialog } from '@/components/PremiumDialog';
-import { LoginDialog } from '@/components/LoginDialog';
 import { NotificationButton } from '@/components/NotificationButton';
 import { SettingsDialog } from '@/components/SettingsDialog';
 
@@ -17,11 +16,9 @@ export function HabitDashboard() {
   const { data: userPrefs } = useUserPreferences();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
 
   const isPremium = userPrefs?.isPremium ?? false;
-  const isLoggedIn = userPrefs?.isLoggedIn ?? false;
 
   if (isLoading) {
     return (
@@ -72,25 +69,6 @@ export function HabitDashboard() {
 
               {/* Notification Button - Mobile Only */}
               <NotificationButton />
-
-              {/* Login/Account Button */}
-              <Button
-                onClick={() => setIsLoginDialogOpen(true)}
-                size="lg"
-                variant="outline"
-                className={`gap-2 ${isLoggedIn ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20' : ''}`}
-              >
-                {isLoggedIn ? (
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                    {userPrefs?.userName?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                ) : (
-                  <User size={20} className="text-gray-600" />
-                )}
-                <span className="hidden sm:inline">
-                  {isLoggedIn ? userPrefs?.userName || 'Account' : 'Sign In'}
-                </span>
-              </Button>
 
               {!isPremium && (
                 <Button
@@ -160,12 +138,6 @@ export function HabitDashboard() {
       <PremiumDialog
         open={isPremiumDialogOpen}
         onOpenChange={setIsPremiumDialogOpen}
-      />
-
-      {/* Login Dialog */}
-      <LoginDialog
-        open={isLoginDialogOpen}
-        onOpenChange={setIsLoginDialogOpen}
       />
 
       {/* Settings Dialog */}
