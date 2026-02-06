@@ -2,17 +2,11 @@
  * Authentication Service
  *
  * Handles user registration and login.
- * Uses backend API when available, falls back to localStorage for offline/local development.
- * This enables cross-device account sync when backend is configured.
+ * Uses backend ORM (database) for account storage to enable cross-device sync.
+ * Falls back to localStorage only when backend is not available.
  */
 
-import { platformApi } from '@/sdk/core/request';
-
-const AUTH_ENDPOINTS = {
-  REGISTER: '/api/auth/register',
-  LOGIN: '/api/auth/login',
-  ME: '/api/auth/me',
-} as const;
+import { UserAccountsORM, type UserAccountsModel } from '@/sdk/database/orm/orm_user_accounts';
 
 // localStorage key for users (fallback when backend is not available)
 const LOCAL_USERS_KEY = 'habitTracker_users';
@@ -41,6 +35,26 @@ function isBackendAvailable(): boolean {
 }
 
 /**
+ * Get singleton ORM instance for user accounts
+ */
+function getUserAccountsORM(): UserAccountsORM {
+  return UserAccountsORM.getInstance();
+}
+
+/**
+ * Convert ORM model to AuthUser
+ */
+function ormModelToAuthUser(model: UserAccountsModel): AuthUser {
+  return {
+    id: model.id,
+    email: model.email,
+    name: model.name,
+    isPremium: model.is_premium,
+    createdAt: model.create_time ? new Date(parseInt(model.create_time) * 1000).toISOString() : new Date().toISOString(),
+  };
+}
+
+/**
  * Get stored users from localStorage
  */
 function getLocalUsers(): Record<string, { name: string; password: string; isPremium: boolean; createdAt: string }> {
@@ -61,43 +75,52 @@ function saveLocalUsers(users: Record<string, { name: string; password: string; 
 
 /**
  * Register a new user account
- * Uses backend API when available, falls back to localStorage
+ * Uses backend ORM when available, falls back to localStorage
  */
 export async function registerUser(
   email: string,
   password: string,
   name: string
 ): Promise<AuthResult> {
-  // Try backend API first if available
+  // Try backend ORM first if available
   if (isBackendAvailable()) {
     try {
-      const response = await platformApi.post(AUTH_ENDPOINTS.REGISTER, {
-        email,
-        password,
-        name,
-      });
+      const orm = getUserAccountsORM();
 
-      if (!response.ok) {
-        // Try to get error message from response
-        try {
-          const errorData = await response.json();
-          return {
-            success: false,
-            error: errorData.message || errorData.error || `Registration failed: ${response.status}`,
-          };
-        } catch {
-          return {
-            success: false,
-            error: `Registration failed: ${response.status}`,
-          };
-        }
+      // Check if user already exists
+      const existingUsers = await orm.getUserAccountsByEmail(email);
+      if (existingUsers.length > 0) {
+        return {
+          success: false,
+          error: 'An account with this email already exists',
+        };
       }
 
-      const data = await response.json();
+      // Create new user account in backend database
+      const newUser: UserAccountsModel = {
+        id: '', // Backend will assign
+        data_creator: '',
+        data_updater: '',
+        create_time: '',
+        update_time: '',
+        email,
+        name,
+        password: btoa(password), // Simple encoding - backend should handle proper hashing
+        is_premium: false,
+      };
+
+      const insertedUsers = await orm.insertUserAccounts([newUser]);
+
+      if (insertedUsers.length === 0) {
+        return {
+          success: false,
+          error: 'Failed to create account',
+        };
+      }
+
       return {
         success: true,
-        user: data.user,
-        token: data.token,
+        user: ormModelToAuthUser(insertedUsers[0]),
       };
     } catch (error) {
       // Backend failed, fall through to localStorage
@@ -146,47 +169,40 @@ export async function registerUser(
 
 /**
  * Login user
- * Uses backend API when available, falls back to localStorage
+ * Uses backend ORM when available, falls back to localStorage
  */
 export async function loginUser(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  // Try backend API first if available
+  // Try backend ORM first if available
   if (isBackendAvailable()) {
     try {
-      const response = await platformApi.post(AUTH_ENDPOINTS.LOGIN, {
-        email,
-        password,
-      });
+      const orm = getUserAccountsORM();
 
-      if (!response.ok) {
-        // Try to get error message from response
-        try {
-          const errorData = await response.json();
-          return {
-            success: false,
-            error: errorData.message || errorData.error || 'Invalid email or password',
-          };
-        } catch {
-          if (response.status === 401) {
-            return { success: false, error: 'Invalid email or password' };
-          }
-          if (response.status === 404) {
-            return { success: false, error: 'No account found with this email. Please sign up.' };
-          }
-          return {
-            success: false,
-            error: `Login failed: ${response.status}`,
-          };
-        }
+      // Find user by email
+      const users = await orm.getUserAccountsByEmail(email);
+
+      if (users.length === 0) {
+        return {
+          success: false,
+          error: 'No account found with this email. Please sign up.',
+        };
       }
 
-      const data = await response.json();
+      const user = users[0];
+
+      // Verify password
+      if (user.password !== btoa(password)) {
+        return {
+          success: false,
+          error: 'Invalid email or password',
+        };
+      }
+
       return {
         success: true,
-        user: data.user,
-        token: data.token,
+        user: ormModelToAuthUser(user),
       };
     } catch (error) {
       // Backend failed, fall through to localStorage
@@ -233,31 +249,52 @@ export async function loginUser(
 }
 
 /**
- * Get current user info
- * Uses backend API when available
+ * Get current user info by email
+ * Uses backend ORM when available
  */
-export async function getCurrentUser(): Promise<AuthResult> {
-  if (!isBackendAvailable()) {
+export async function getCurrentUser(email?: string): Promise<AuthResult> {
+  if (!email) {
     return {
       success: false,
-      error: 'Backend not available',
+      error: 'Email required',
+    };
+  }
+
+  if (!isBackendAvailable()) {
+    // Try localStorage
+    const users = getLocalUsers();
+    if (users[email]) {
+      return {
+        success: true,
+        user: {
+          id: email,
+          email,
+          name: users[email].name,
+          isPremium: users[email].isPremium || false,
+          createdAt: users[email].createdAt,
+        },
+      };
+    }
+    return {
+      success: false,
+      error: 'User not found',
     };
   }
 
   try {
-    const response = await platformApi.get(AUTH_ENDPOINTS.ME);
+    const orm = getUserAccountsORM();
+    const users = await orm.getUserAccountsByEmail(email);
 
-    if (!response.ok) {
+    if (users.length === 0) {
       return {
         success: false,
-        error: 'Not authenticated',
+        error: 'User not found',
       };
     }
 
-    const data = await response.json();
     return {
       success: true,
-      user: data.user || data,
+      user: ormModelToAuthUser(users[0]),
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

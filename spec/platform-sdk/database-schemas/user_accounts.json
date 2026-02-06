@@ -1,0 +1,138 @@
+{
+  "id": "102019c33615a3f7793b3dca7fb50b93855",
+  "version": "102019c33615a3f76e89e45c1783efdb10d",
+  "schema": {
+    "name": "user_accounts",
+    "description": "Stores user authentication and profile data accessible across multiple devices, including premium status and credentials.",
+    "fields": [
+      {
+        "name": "id",
+        "description": "Unique identifier for each user account.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "System identifier, public."
+        }
+      },
+      {
+        "name": "data_creator",
+        "description": "id of the user who creates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Audit trail information."
+        }
+      },
+      {
+        "name": "data_updater",
+        "description": "id of the user who updates the record",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Audit trail information."
+        }
+      },
+      {
+        "name": "create_time",
+        "description": "create time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "System timestamp."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "update_time",
+        "description": "update time in timestamp unix",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 1,
+          "reason": "System timestamp."
+        },
+        "format": "timestamp"
+      },
+      {
+        "name": "email",
+        "description": "Unique email address for user authentication.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "Personally Identifiable Information (PII)."
+        },
+        "format": "email"
+      },
+      {
+        "name": "name",
+        "description": "User's display name.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "User profile information, internal use."
+        }
+      },
+      {
+        "name": "is_premium",
+        "description": "Boolean flag indicating if the user has premium status.",
+        "type": 3,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Business logic status."
+        }
+      },
+      {
+        "name": "password",
+        "description": "Hashed password string for authentication.",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 4,
+          "reason": "Authentication credential, highly sensitive."
+        },
+        "encryption": true,
+        "format": "password"
+      }
+    ],
+    "indexes": [
+      {
+        "fields": [
+          "id"
+        ],
+        "unique": true,
+        "primary": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "data_creator"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "data_updater"
+        ],
+        "order": false
+      },
+      {
+        "fields": [
+          "email"
+        ],
+        "unique": true,
+        "order": false
+      }
+    ]
+  },
+  "task": {
+    "id": "6985fbb7dbd7b2ac40706a23",
+    "root": "692ba10086c50c404f9cea0d",
+    "project": "692ba10086c50c404f9cea0c",
+    "user": "581133e0-7031-70df-9b3a-a79e9d93a029"
+  },
+  "namespace": {
+    "id": "01987547fc6c72ecb453bd2736bd4ea0",
+    "tenant": 2,
+    "name": "global-1",
+    "default": true
+  },
+  "revision": 1
+}
