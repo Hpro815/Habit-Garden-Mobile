@@ -1,6 +1,6 @@
 {
-  "short_name": "Creao",
-  "name": "Creao",
+  "short_name": "Habit Garden",
+  "name": "Habit Garden - Grow Your Habits",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,11 +10,15 @@
     {
       "src": "creao_icon.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512"
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#8b5cf6",
+  "background_color": "#faf5ff",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "productivity", "health"],
+  "description": "Transform your habits into beautiful growing characters. Watch your digital garden flourish as you build consistency."
 }
