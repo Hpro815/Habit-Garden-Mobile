@@ -6,7 +6,9 @@ import { HabitDashboard } from "@/components/HabitDashboard";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { TutorialButton } from "@/components/TutorialButton";
 import { GardenNameDialog } from "@/components/GardenNameDialog";
+import { OfflineScreen } from "@/components/OfflineScreen";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPermissionDialog, useNotificationPermissionPrompt } from "@/components/NotificationPermissionDialog";
 import { NotificationTimePickerScreen } from "@/components/NotificationTimePickerScreen";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,7 +28,13 @@ function App() {
 	const [showGardenNameDialog, setShowGardenNameDialog] = useState(false);
 	const [notificationPickerComplete, setNotificationPickerComplete] = useState(false);
 	const { shouldShow: showNotificationPrompt, setShouldShow: setShowNotificationPrompt } = useNotificationPermissionPrompt();
+	const { isOnline, retry: retryConnection } = useOnlineStatus();
 	const isMobile = useIsMobile();
+
+	// Show offline screen when not connected
+	if (!isOnline) {
+		return <OfflineScreen onRetry={retryConnection} />;
+	}
 
 	if (isLoading) {
 		return (
