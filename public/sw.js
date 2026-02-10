@@ -1,24 +1,43 @@
 // Service Worker for Habit Garden
 // Provides offline support by caching app shell and serving offline page
 
-const CACHE_NAME = 'habit-garden-v1';
+const CACHE_NAME = 'habit-garden-v2';
 const OFFLINE_URL = '/offline.html';
 
-// Files to cache for offline support
-const STATIC_ASSETS = [
-  '/',
+// Essential files to cache for offline support
+const ESSENTIAL_ASSETS = [
   '/offline.html',
   '/favicon.ico',
-  '/creao_icon.svg',
   '/manifest.json',
 ];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Cache the offline page and static assets
-      return cache.addAll(STATIC_ASSETS);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Cache essential assets one by one to avoid failure if one fails
+      const cachePromises = ESSENTIAL_ASSETS.map(async (url) => {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            await cache.put(url, response);
+          }
+        } catch (error) {
+          console.log(`Failed to cache ${url}:`, error);
+        }
+      });
+
+      await Promise.all(cachePromises);
+
+      // Try to cache the root page, but don't fail if it doesn't work
+      try {
+        const rootResponse = await fetch('/');
+        if (rootResponse.ok) {
+          await cache.put('/', rootResponse);
+        }
+      } catch (error) {
+        console.log('Failed to cache root page:', error);
+      }
     })
   );
   // Activate immediately
@@ -49,7 +68,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip cross-origin requests
+  // Skip cross-origin requests (like Google Ads, analytics, etc.)
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
@@ -60,23 +79,34 @@ self.addEventListener('fetch', (event) => {
       fetch(event.request)
         .then((response) => {
           // If successful, cache the response for future offline use
-          if (response.status === 200) {
+          if (response && response.ok && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseClone);
+            }).catch((err) => {
+              console.log('Failed to cache navigation response:', err);
             });
           }
           return response;
         })
-        .catch(() => {
+        .catch(async () => {
           // Network failed, try to serve from cache
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // No cached version, serve offline page
-            return caches.match(OFFLINE_URL);
-          });
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          // No cached version, serve offline page
+          const offlinePage = await caches.match(OFFLINE_URL);
+          if (offlinePage) {
+            return offlinePage;
+          }
+
+          // If even the offline page isn't cached, return a basic response
+          return new Response(
+            '<html><body><h1>Offline</h1><p>You are currently offline. Please check your internet connection.</p></body></html>',
+            { headers: { 'Content-Type': 'text/html' } }
+          );
         })
     );
     return;
@@ -88,9 +118,11 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         // Return cached version, but also fetch and update cache in background
         fetch(event.request).then((response) => {
-          if (response.status === 200) {
+          if (response && response.ok && response.status === 200) {
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, response);
+            }).catch(() => {
+              // Ignore cache errors for background updates
             });
           }
         }).catch(() => {
@@ -102,15 +134,17 @@ self.addEventListener('fetch', (event) => {
       // Not in cache, fetch from network
       return fetch(event.request).then((response) => {
         // Cache successful responses
-        if (response.status === 200) {
+        if (response && response.ok && response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
+          }).catch(() => {
+            // Ignore cache errors
           });
         }
         return response;
       }).catch(() => {
-        // For failed asset requests, return nothing (will show as broken)
+        // For failed asset requests, return a minimal response
         return new Response('', { status: 503, statusText: 'Service Unavailable' });
       });
     })
