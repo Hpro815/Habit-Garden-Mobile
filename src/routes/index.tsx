@@ -7,16 +7,11 @@ import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { TutorialButton } from "@/components/TutorialButton";
 import { GardenNameDialog } from "@/components/GardenNameDialog";
 import { OfflineScreen } from "@/components/OfflineScreen";
+import { UniversalNotificationTimePicker } from "@/components/UniversalNotificationTimePicker";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPermissionDialog, useNotificationPermissionPrompt } from "@/components/NotificationPermissionDialog";
-import { NotificationTimePickerScreen } from "@/components/NotificationTimePickerScreen";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// Check if running in Android WebView with notifications support
-function isAndroidNotificationsAvailable(): boolean {
-	return typeof window !== 'undefined' && typeof window.AndroidNotifications !== 'undefined';
-}
 
 export const Route = createFileRoute("/")({
 	component: App,
@@ -51,17 +46,15 @@ function App() {
 		return <Onboarding onComplete={() => window.location.reload()} />;
 	}
 
-	// Show notification time picker on first launch (mobile Android app only)
+	// Show universal notification time picker on first launch (all platforms)
 	// Only show if user hasn't been asked for notification permission yet
 	const showNotificationTimePicker =
-		isMobile &&
-		isAndroidNotificationsAvailable() &&
 		!userPrefs?.notificationPermissionAsked &&
 		!notificationPickerComplete;
 
 	if (showNotificationTimePicker) {
 		return (
-			<NotificationTimePickerScreen
+			<UniversalNotificationTimePicker
 				onComplete={() => setNotificationPickerComplete(true)}
 			/>
 		);
