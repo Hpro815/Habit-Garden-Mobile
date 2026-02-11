@@ -170,8 +170,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   // All minutes from 00 to 59
   const minutes = Array.from({ length: 60 }, (_, i) => i);
 
-  // Only show notification settings on mobile Android app
-  const showNotificationSettings = isMobile && isAndroid;
+  // Show notification settings on all platforms
+  // But only show the toggle switch on mobile Android (where it actually works)
+  const showNotificationSettings = true;
+  const showNotificationToggle = isMobile && isAndroid;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,32 +209,40 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             />
           </div>
 
-          {/* Notification Settings - Mobile Only */}
+          {/* Notification Settings - All Platforms */}
           {showNotificationSettings && (
             <>
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Bell className="text-purple-500" size={18} />
-                    <Label className="text-sm font-medium">Daily Notifications</Label>
+              {/* Notification Toggle - Only on mobile Android */}
+              {showNotificationToggle && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="text-purple-500" size={18} />
+                      <Label className="text-sm font-medium">Daily Notifications</Label>
+                    </div>
+                    <Switch
+                      checked={notificationsEnabled}
+                      onCheckedChange={handleNotificationToggle}
+                    />
                   </div>
-                  <Switch
-                    checked={notificationsEnabled}
-                    onCheckedChange={handleNotificationToggle}
-                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                    Get reminded about your habits daily
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
-                  Get reminded about your habits daily
-                </p>
-              </div>
+              )}
 
-              {/* Time Picker - Only show when notifications are enabled */}
-              {notificationsEnabled && (
-                <div className="space-y-3 pl-6">
+              {/* Time Picker - Show on all platforms when notifications enabled, or always show if not on Android */}
+              {(notificationsEnabled || !showNotificationToggle) && (
+                <div className={`space-y-3 ${showNotificationToggle ? 'pl-6' : 'border-t border-gray-200 dark:border-gray-700 pt-4'}`}>
                   <div className="flex items-center gap-2">
-                    <Clock className="text-purple-400" size={16} />
-                    <Label className="text-sm text-gray-600 dark:text-gray-400">Notification Time</Label>
+                    <Clock className="text-purple-500" size={18} />
+                    <Label className="text-sm font-medium">Notification Time</Label>
                   </div>
+                  {!showNotificationToggle && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      Choose when to receive daily reminders
+                    </p>
+                  )}
 
                   <div className="flex items-center gap-2">
                     {/* Hour Selector */}
