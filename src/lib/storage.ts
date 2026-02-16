@@ -222,6 +222,7 @@ export const userPrefsStorage = {
       notificationPermissionAsked: false,
       adEarnedSlots: 0,
       adTriesUsed: 0,
+      streaksEnabled: true,
     };
 
     return safeJSONParse<UserPreferences>(STORAGE_KEYS.USER_PREFS, defaultPrefs);

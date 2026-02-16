@@ -107,6 +107,8 @@ export interface UserPreferences {
   // Ad-earned extra habit slots
   adEarnedSlots: number; // Number of extra habit slots earned from watching ads
   adTriesUsed: number; // Number of times user has used the ad option (max 2)
+  // Display settings
+  streaksEnabled: boolean; // Show/hide streak counters
 }
 
 // Maximum times user can use ad option to get extra slots

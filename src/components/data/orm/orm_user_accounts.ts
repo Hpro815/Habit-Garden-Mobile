@@ -2,8 +2,8 @@
 // - Namespace: 01987547fc6c72ecb453bd2736bd4ea0.
 // - Entity Name: user_accounts.
 // - Entity ID: 102019c33619abf771f8d3205a7a0245b28.
-// - Entity Version: 102019c4d6a952d7d1a8409068f9a7e42be.
-// - Task ID: 698ca6705af076e855e85b64.
+// - Entity Version: 102019c6611b04478da843b57585b06a85d.
+// - Task ID: 6992f61624412caf227fb442.
 // - Task Root ID: 692ba10086c50c404f9cea0d.
 
 import { DataType } from "./common";
@@ -57,8 +57,8 @@ export class UserAccountsORM {
     this.namespace = '01987547fc6c72ecb453bd2736bd4ea0';
     this.entityId = '102019c33619abf771f8d3205a7a0245b28';
     this.entityName = 'user_accounts';
-    this.entityVersion = '102019c4d6a952d7d1a8409068f9a7e42be';
-    this.taskId = '698ca6705af076e855e85b64';
+    this.entityVersion = '102019c6611b04478da843b57585b06a85d';
+    this.taskId = '6992f61624412caf227fb442';
     this.taskRootId = '692ba10086c50c404f9cea0d';
   }
 

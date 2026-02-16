@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useUserPreferences, useUpdateUserPreferences } from '@/hooks/useUserPreferences';
-import { Bell, Clock, Flower2, Settings, Check } from 'lucide-react';
+import { Bell, Clock, Flower2, Settings, Check, Flame } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Maximum length for garden name
@@ -68,6 +68,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   // Local state for form
   const [gardenName, setGardenName] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [streaksEnabled, setStreaksEnabled] = useState(true);
   const [selectedHour, setSelectedHour] = useState(9);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [isAM, setIsAM] = useState(true);
@@ -79,6 +80,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (userPrefs) {
       setGardenName(userPrefs.gardenName || '');
       setNotificationsEnabled(userPrefs.notificationsEnabled || false);
+      setStreaksEnabled(userPrefs.streaksEnabled ?? true);
 
       // Parse notification time
       if (userPrefs.notificationTime) {
@@ -134,6 +136,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     // Update preferences
     await updatePrefs.mutateAsync({
       notificationsEnabled: enabled,
+    });
+  };
+
+  const handleStreaksToggle = async (enabled: boolean) => {
+    setStreaksEnabled(enabled);
+
+    // Update preferences immediately
+    await updatePrefs.mutateAsync({
+      streaksEnabled: enabled,
     });
   };
 
@@ -303,6 +314,23 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               )}
             </>
           )}
+
+          {/* Streaks Display Toggle */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="text-orange-500" size={18} />
+                <Label className="text-sm font-medium">Show Streaks</Label>
+              </div>
+              <Switch
+                checked={streaksEnabled}
+                onCheckedChange={handleStreaksToggle}
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+              Display streak counters on your habit cards
+            </p>
+          </div>
         </div>
 
         {/* Save Button */}

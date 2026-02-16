@@ -44,6 +44,7 @@ export function HabitCard({ habit }: HabitCardProps) {
   const health = habit.health ?? 100;
   const isDead = habit.isDead ?? false;
   const isPremium = userPrefs?.isPremium ?? false;
+  const streaksEnabled = userPrefs?.streaksEnabled ?? true;
   const hasAppBlocking = habit.appBlocking?.enabled && habit.appBlocking.blockedApps.length > 0;
 
   const handleDelete = () => {
@@ -199,11 +200,13 @@ export function HabitCard({ habit }: HabitCardProps) {
           <div className="border-t p-4">
             {!isDead && (
               <>
-                <div className="mb-3 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-gray-900 dark:text-white">
-                    <Flame size={16} className="text-orange-500" />
-                    <span className="font-medium">{habit.streakCount} day streak</span>
-                  </div>
+                <div className={`mb-3 flex items-center ${streaksEnabled ? 'justify-between' : 'justify-end'} text-sm`}>
+                  {streaksEnabled && (
+                    <div className="flex items-center gap-1 text-gray-900 dark:text-white">
+                      <Flame size={16} className="text-orange-500" />
+                      <span className="font-medium">{habit.streakCount} day streak</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1 text-gray-900 dark:text-white">
                     <TrendingUp size={16} className="text-purple-500" />
                     <span className="font-medium">Stage {habit.currentStage + 1}</span>

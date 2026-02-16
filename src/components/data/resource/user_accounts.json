@@ -1,6 +1,6 @@
 {
   "id": "102019c33619abf771f8d3205a7a0245b28",
-  "version": "102019c4d6a952d7d1a8409068f9a7e42be",
+  "version": "102019c6611b04478da843b57585b06a85d",
   "schema": {
     "name": "user_accounts",
     "description": "Stores user authentication and profile data accessible across multiple devices, including premium status and credentials.",
@@ -123,7 +123,7 @@
     ]
   },
   "task": {
-    "id": "698ca6705af076e855e85b64",
+    "id": "6992f61624412caf227fb442",
     "root": "692ba10086c50c404f9cea0d",
     "project": "692ba10086c50c404f9cea0c",
     "user": "581133e0-7031-70df-9b3a-a79e9d93a029"
