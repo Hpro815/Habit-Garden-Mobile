@@ -62,7 +62,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900 p-4" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       <Card className="w-full max-w-2xl overflow-hidden border-2 shadow-2xl">
         <CardContent className="p-0">
           <AnimatePresence mode="wait">

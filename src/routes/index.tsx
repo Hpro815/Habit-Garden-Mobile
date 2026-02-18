@@ -33,7 +33,7 @@ function App() {
 
 	if (isLoading) {
 		return (
-			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900">
+			<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
 				<div className="text-center">
 					<div className="mb-4 text-2xl">🌱</div>
 					<p className="text-gray-600 dark:text-gray-300">Loading...</p>

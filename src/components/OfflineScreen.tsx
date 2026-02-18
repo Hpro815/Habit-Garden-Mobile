@@ -17,7 +17,7 @@ export function OfflineScreen({ onRetry }: OfflineScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-slate-100 to-gray-200 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-slate-100 to-gray-200 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800 flex items-center justify-center p-4" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       <Card className="max-w-md w-full p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 shadow-xl">
         <div className="text-center">
           {/* Animated offline icon */}

@@ -63,7 +63,7 @@ export function UniversalNotificationTimePicker({ onComplete }: UniversalNotific
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/30 dark:to-blue-900/30 flex flex-col items-center justify-center p-6">
+    <div className="min-h-dvh bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/30 dark:to-blue-900/30 flex flex-col items-center justify-center p-6" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

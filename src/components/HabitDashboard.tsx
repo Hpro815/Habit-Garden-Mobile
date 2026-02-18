@@ -22,7 +22,7 @@ export function HabitDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
         <div className="text-center">
           <AnimatedCharacter
             theme="tulip"
@@ -40,8 +40,8 @@ export function HabitDashboard() {
   const hasHabits = habits && habits.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/30 dark:to-blue-900/30">
-      {/* Fixed Header - 64px for Android WebView */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/30 dark:to-blue-900/30" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+      {/* Fixed Header - 64px + safe area for Android status bar */}
       <div className="h-16 flex items-center px-3 border-b border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
         <div className="flex-1 min-w-0 mr-2">
           <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 truncate leading-tight">
