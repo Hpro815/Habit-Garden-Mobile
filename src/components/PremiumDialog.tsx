@@ -10,9 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AnimatedCharacter } from '@/components/AnimatedCharacter';
-import { Check, Crown, Sparkles, Zap, Infinity as InfinityIcon, Star } from 'lucide-react';
+import { Check, Crown, Sparkles, Zap, Infinity as InfinityIcon, Star, FlaskConical } from 'lucide-react';
 import { FREE_HABIT_LIMIT_PER_MONTH } from '@/types/habit';
-import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useUserPreferences, useUnlockPremium } from '@/hooks/useUserPreferences';
 import { PRICING_INFO, startCheckout, type PricingPlan } from '@/lib/stripe';
 
 interface PremiumDialogProps {
@@ -36,9 +36,18 @@ const flowerShowcase = [
 export function PremiumDialog({ open, onOpenChange }: PremiumDialogProps) {
   const { data: userPrefs } = useUserPreferences();
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>('yearly');
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const unlockPremium = useUnlockPremium();
 
   const handleCheckout = (plan: PricingPlan) => {
     startCheckout(plan);
+  };
+
+  const handleTryDemo = async () => {
+    setIsDemoLoading(true);
+    await unlockPremium.mutateAsync();
+    setIsDemoLoading(false);
+    onOpenChange(false);
   };
 
   if (userPrefs?.isPremium) {
@@ -216,6 +225,30 @@ export function PremiumDialog({ open, onOpenChange }: PremiumDialogProps) {
 
             <p className="text-center text-[10px] sm:text-xs text-gray-900 dark:text-white">
               Secure payment powered by Stripe. Cancel anytime.
+            </p>
+
+            {/* Demo button */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white dark:bg-gray-900 px-2 text-gray-400 dark:text-gray-500">or</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleTryDemo}
+              size="lg"
+              variant="outline"
+              disabled={isDemoLoading}
+              className="w-full gap-2 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+            >
+              <FlaskConical size={18} />
+              {isDemoLoading ? 'Unlocking...' : 'Try Premium Demo (Free)'}
+            </Button>
+            <p className="text-center text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+              Instantly unlock all premium features to try them out
             </p>
           </div>
         </div>
