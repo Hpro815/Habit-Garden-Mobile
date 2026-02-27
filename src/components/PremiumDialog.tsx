@@ -45,14 +45,19 @@ export function PremiumDialog({ open, onOpenChange }: PremiumDialogProps) {
 
   const handleTryDemo = async () => {
     setIsDemoLoading(true);
-    await unlockPremium.mutateAsync();
+    await unlockPremium.mutateAsync(selectedPlan);
     setIsDemoLoading(false);
     onOpenChange(false);
   };
 
-  if (userPrefs?.isPremium) {
+  // If user already has premium and lifetime plan, don't show dialog at all
+  if (userPrefs?.isPremium && userPrefs?.premiumPlan === 'onetime') {
     return null;
   }
+
+  // Show dialog even if user has premium (to allow upgrade from monthly/yearly to lifetime)
+  const isPremium = userPrefs?.isPremium ?? false;
+  const currentPlan = userPrefs?.premiumPlan;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,37 +106,51 @@ export function PremiumDialog({ open, onOpenChange }: PremiumDialogProps) {
           <div>
             <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 text-center text-gray-900 dark:text-white">Choose Your Plan</h3>
             <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
-              {PRICING_INFO.map((pricing) => (
-                <Card
-                  key={pricing.plan}
-                  onClick={() => setSelectedPlan(pricing.plan)}
-                  className={`p-2 sm:p-4 cursor-pointer transition-all relative ${
-                    selectedPlan === pricing.plan
-                      ? 'border-2 border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30'
-                      : 'border border-gray-200 dark:border-gray-700 hover:border-yellow-300'
-                  }`}
-                >
-                  {pricing.popular && (
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-                      <span className="bg-yellow-500 text-white text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
-                        <Star size={8} fill="currentColor" className="sm:w-2.5 sm:h-2.5" /> Popular
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-center pt-1 sm:pt-2">
-                    <div className="text-xs sm:text-base font-semibold text-gray-900 dark:text-white">{pricing.label}</div>
-                    <div className="mt-1 sm:mt-2">
-                      <span className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white">{pricing.price}</span>
-                      <span className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 block sm:inline">{pricing.period}</span>
-                    </div>
-                    {pricing.savings && (
-                      <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-medium text-green-600 dark:text-green-400">
-                        {pricing.savings}
+              {PRICING_INFO.map((pricing) => {
+                const isCurrentPlan = currentPlan === pricing.plan;
+                const isSelected = selectedPlan === pricing.plan;
+
+                return (
+                  <Card
+                    key={pricing.plan}
+                    onClick={() => setSelectedPlan(pricing.plan)}
+                    className={`p-2 sm:p-4 cursor-pointer transition-all relative ${
+                      isCurrentPlan
+                        ? 'border-2 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30'
+                        : isSelected
+                        ? 'border-2 border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30'
+                        : 'border border-gray-200 dark:border-gray-700 hover:border-yellow-300'
+                    }`}
+                  >
+                    {isCurrentPlan && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+                        <span className="bg-green-500 text-white text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
+                          <Check size={8} fill="currentColor" className="sm:w-2.5 sm:h-2.5" /> Selected
+                        </span>
                       </div>
                     )}
-                  </div>
-                </Card>
-              ))}
+                    {!isCurrentPlan && pricing.popular && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+                        <span className="bg-yellow-500 text-white text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
+                          <Star size={8} fill="currentColor" className="sm:w-2.5 sm:h-2.5" /> Popular
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-center pt-1 sm:pt-2">
+                      <div className="text-xs sm:text-base font-semibold text-gray-900 dark:text-white">{pricing.label}</div>
+                      <div className="mt-1 sm:mt-2">
+                        <span className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white">{pricing.price}</span>
+                        <span className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 block sm:inline">{pricing.period}</span>
+                      </div>
+                      {pricing.savings && (
+                        <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-medium text-green-600 dark:text-green-400">
+                          {pricing.savings}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 

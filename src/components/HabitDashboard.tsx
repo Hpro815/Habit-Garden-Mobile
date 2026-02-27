@@ -19,6 +19,9 @@ export function HabitDashboard() {
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
 
   const isPremium = userPrefs?.isPremium ?? false;
+  const hasLifetimePlan = userPrefs?.premiumPlan === 'onetime';
+  // Show premium button if not premium, OR if premium but not lifetime (allow upgrade)
+  const showPremiumButton = !isPremium || !hasLifetimePlan;
 
   if (isLoading) {
     return (
@@ -68,7 +71,7 @@ export function HabitDashboard() {
           {/* Notification Button - Mobile Only */}
           <NotificationButton />
 
-          {!isPremium && (
+          {showPremiumButton && (
             <Button
               onClick={() => setIsPremiumDialogOpen(true)}
               size="sm"

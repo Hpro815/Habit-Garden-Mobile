@@ -47,14 +47,6 @@ export type ColorPaletteType =
   | 'mint-dream'
   | 'lavender-mist';
 
-export interface AppBlockSettings {
-  enabled: boolean;
-  blockedApps: string[]; // App names/identifiers
-  blockType: 'during_habit' | 'time_period' | 'until_complete';
-  startTime?: string; // Format: "HH:MM" for time_period type
-  endTime?: string; // Format: "HH:MM" for time_period type
-}
-
 export interface Habit {
   id: string;
   name: string;
@@ -72,7 +64,6 @@ export interface Habit {
   createdMonth?: string; // Format: "YYYY-MM" for tracking monthly habit creation
   health: number; // 0-100, pet/plant health that decays when streak is broken
   isDead: boolean; // Pet/plant has died from neglect
-  appBlocking?: AppBlockSettings; // Premium feature for app blocking
 }
 
 export interface Completion {
@@ -90,6 +81,7 @@ export interface UserPreferences {
   defaultTheme?: ThemeType;
   notificationTime?: string;
   isPremium: boolean;
+  premiumPlan?: 'monthly' | 'yearly' | 'onetime'; // Track which plan was purchased
   purchasedSkins: string[];
   purchasedBackgrounds: string[];
   purchasedAnimations: string[];

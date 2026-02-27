@@ -5,13 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { AnimatedCharacter } from '@/components/AnimatedCharacter';
 import { useCompleteHabit, useHabitStats, useReviveHabit, useDeleteHabit } from '@/hooks/useHabits';
 import type { Habit } from '@/types/habit';
-import { CheckCircle2, Flame, TrendingUp, Heart, Skull, RefreshCw, Trash2, MoreVertical, Smartphone, Crown } from 'lucide-react';
+import { CheckCircle2, Flame, TrendingUp, Heart, Skull, RefreshCw, Trash2, MoreVertical } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -24,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AppBlockingDialog } from '@/components/AppBlockingDialog';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 
 interface HabitCardProps {
@@ -39,13 +37,10 @@ export function HabitCard({ habit }: HabitCardProps) {
   const deleteHabit = useDeleteHabit();
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isAppBlockingDialogOpen, setIsAppBlockingDialogOpen] = useState(false);
 
   const health = habit.health ?? 100;
   const isDead = habit.isDead ?? false;
-  const isPremium = userPrefs?.isPremium ?? false;
   const streaksEnabled = userPrefs?.streaksEnabled ?? true;
-  const hasAppBlocking = habit.appBlocking?.enabled && habit.appBlocking.blockedApps.length > 0;
 
   const handleDelete = () => {
     deleteHabit.mutate(habit.id);
@@ -116,12 +111,6 @@ export function HabitCard({ habit }: HabitCardProps) {
                       Deceased
                     </Badge>
                   )}
-                  {hasAppBlocking && !isDead && (
-                    <Badge variant="outline" className="text-xs border-purple-300 text-purple-600">
-                      <Smartphone size={10} className="mr-1" />
-                      Blocking
-                    </Badge>
-                  )}
                 </div>
               </div>
               <DropdownMenu>
@@ -131,19 +120,6 @@ export function HabitCard({ habit }: HabitCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsAppBlockingDialogOpen(true);
-                    }}
-                  >
-                    <Smartphone size={14} className="mr-2" />
-                    App Blocking
-                    {!isPremium && <Crown size={12} className="ml-2 text-yellow-500" />}
-                    {hasAppBlocking && <span className="ml-2 w-2 h-2 rounded-full bg-green-500" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 cursor-pointer"
                     onClick={(e) => {
@@ -267,13 +243,6 @@ export function HabitCard({ habit }: HabitCardProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* App Blocking Dialog */}
-      <AppBlockingDialog
-        open={isAppBlockingDialogOpen}
-        onOpenChange={setIsAppBlockingDialogOpen}
-        habit={habit}
-      />
     </motion.div>
   );
 }

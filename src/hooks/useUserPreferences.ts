@@ -37,9 +37,10 @@ export function useUnlockPremium() {
   const updatePrefs = useUpdateUserPreferences();
 
   return useMutation({
-    mutationFn: () =>
+    mutationFn: (plan?: 'monthly' | 'yearly' | 'onetime') =>
       updatePrefs.mutateAsync({
         isPremium: true,
+        premiumPlan: plan,
       }),
   });
 }
