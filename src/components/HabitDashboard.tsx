@@ -8,7 +8,6 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { HabitCard } from '@/components/HabitCard';
 import { CreateHabitDialog } from '@/components/CreateHabitDialog';
 import { PremiumDialog } from '@/components/PremiumDialog';
-import { NotificationButton } from '@/components/NotificationButton';
 import { SettingsDialog } from '@/components/SettingsDialog';
 
 export function HabitDashboard() {
@@ -67,9 +66,6 @@ export function HabitDashboard() {
             <Settings size={18} className="text-gray-600" />
             <span className="hidden md:inline md:ml-1.5">Settings</span>
           </Button>
-
-          {/* Notification Button - Mobile Only */}
-          <NotificationButton />
 
           {showPremiumButton && (
             <Button

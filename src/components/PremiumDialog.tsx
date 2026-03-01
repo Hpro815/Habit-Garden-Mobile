@@ -246,7 +246,29 @@ export function PremiumDialog({ open, onOpenChange }: PremiumDialogProps) {
               Secure payment powered by Stripe. Cancel anytime.
             </p>
 
-            
+            {/* Demo button */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white dark:bg-gray-900 px-2 text-gray-400 dark:text-gray-500">or</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleTryDemo}
+              size="lg"
+              variant="outline"
+              disabled={isDemoLoading}
+              className="w-full gap-2 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+            >
+              <FlaskConical size={18} />
+              {isDemoLoading ? 'Unlocking...' : 'Try Premium Demo (Free)'}
+            </Button>
+            <p className="text-center text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+              Instantly unlock all premium features to try them out
+            </p>
           </div>
         </div>
       </DialogContent>

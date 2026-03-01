@@ -7,11 +7,8 @@ import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { TutorialButton } from "@/components/TutorialButton";
 import { GardenNameDialog } from "@/components/GardenNameDialog";
 import { OfflineScreen } from "@/components/OfflineScreen";
-import { UniversalNotificationTimePicker } from "@/components/UniversalNotificationTimePicker";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { NotificationPermissionDialog, useNotificationPermissionPrompt } from "@/components/NotificationPermissionDialog";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/")({
 	component: App,
@@ -21,10 +18,7 @@ function App() {
 	const { data: userPrefs, isLoading } = useUserPreferences();
 	const [showTutorial, setShowTutorial] = useState(false);
 	const [showGardenNameDialog, setShowGardenNameDialog] = useState(false);
-	const [notificationPickerComplete, setNotificationPickerComplete] = useState(false);
-	const { shouldShow: showNotificationPrompt, setShouldShow: setShowNotificationPrompt } = useNotificationPermissionPrompt();
 	const { isOnline, retry: retryConnection } = useOnlineStatus();
-	const isMobile = useIsMobile();
 
 	// Show offline screen when not connected
 	if (!isOnline) {
@@ -44,20 +38,6 @@ function App() {
 
 	if (!userPrefs?.hasCompletedOnboarding) {
 		return <Onboarding onComplete={() => window.location.reload()} />;
-	}
-
-	// Show universal notification time picker on first launch (all platforms)
-	// Only show if user hasn't been asked for notification permission yet
-	const showNotificationTimePicker =
-		!userPrefs?.notificationPermissionAsked &&
-		!notificationPickerComplete;
-
-	if (showNotificationTimePicker) {
-		return (
-			<UniversalNotificationTimePicker
-				onComplete={() => setNotificationPickerComplete(true)}
-			/>
-		);
 	}
 
 	// Show garden name dialog if user hasn't set a garden name yet
@@ -85,11 +65,6 @@ function App() {
 					window.location.reload();
 				}} />
 			)}
-			{/* Notification Permission Dialog */}
-			<NotificationPermissionDialog
-				open={showNotificationPrompt}
-				onOpenChange={setShowNotificationPrompt}
-			/>
 		</>
 	);
 }
