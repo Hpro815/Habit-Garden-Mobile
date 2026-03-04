@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { AnimatedCharacter } from '@/components/AnimatedCharacter';
 import { PremiumDialog } from '@/components/PremiumDialog';
 import { WatchAdsDialog } from '@/components/WatchAdsDialog';
@@ -56,8 +55,6 @@ const habitSchema = z.object({
   ]),
   goalFrequency: z.enum(['daily', 'weekly', 'custom']),
   customFrequency: z.number().optional(),
-  reminderEnabled: z.boolean(),
-  reminderTime: z.string().optional(),
 });
 
 type HabitFormData = z.infer<typeof habitSchema>;
@@ -119,8 +116,6 @@ export function CreateHabitDialog({ open, onOpenChange }: CreateHabitDialogProps
       name: '',
       theme: 'rose',
       goalFrequency: 'daily',
-      reminderEnabled: false,
-      reminderTime: '09:00',
     },
   });
 
@@ -158,6 +153,8 @@ export function CreateHabitDialog({ open, onOpenChange }: CreateHabitDialogProps
         streakCount: 0,
         health: 100,
         isDead: false,
+        reminderEnabled: false, // Reminders disabled by default
+        reminderTime: undefined,
       },
       {
         onSuccess: () => {
@@ -345,25 +342,6 @@ export function CreateHabitDialog({ open, onOpenChange }: CreateHabitDialogProps
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Reminder Toggle */}
-              <FormField
-                control={form.control}
-                name="reminderEnabled"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 dark:border-gray-700">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Enable Reminders</FormLabel>
-                      <div className="text-sm text-muted-foreground">
-                        Get notified to complete your habit
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
                   </FormItem>
                 )}
               />
